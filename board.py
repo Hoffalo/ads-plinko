@@ -1,5 +1,17 @@
+class Board():
+    def __init__(self, board:list):
+        self.board = board
+        self.rows = len(board)
+        self.cols = len(board[0])
 
-board = [
+    def GetSlotScore(self, col: int) -> int:
+        return self.board[self.rows - 1][col]
+    
+    def Print(self):
+        print(self.board)
+
+
+boardMap = [
     [0,1,0,1,0,1,0],
     [0,0,1,0,1,0,0],
     [0,1,0,1,0,1,0],
@@ -7,7 +19,8 @@ board = [
     [10,20,50,100,50,20,10]
 ]
 
-rows, cols = len(board), len(board[0])
+board = Board(boardMap)
 
-def GetSlotScore(col: int) -> int:
-    return board[rows-1][col]
+board.Print()
+
+
