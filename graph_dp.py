@@ -23,7 +23,7 @@ def build_graph(board_model):
         for child in (left_child, right_child):
             if child is None:
                 continue
-            if isinstance(child, int):
+            if type(child) == int:
                 slot_column = child
                 slot_node = node_for_slot(slot_column)
                 if slot_node not in neighbors:
