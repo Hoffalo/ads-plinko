@@ -10,11 +10,6 @@ PEG   = 1
 
 @dataclass
 class BoardModel:
-    """
-    Represents the logical Plinko board:
-    - A grid of pegs (and empty cells) in the upper rows.
-    - A row of slot scores at the bottom.
-    """
     grid: List[List[int]]            # rows of 0/1 (EMPTY/PEG)
     slot_scores: List[int]           # one score per column
 
@@ -38,10 +33,6 @@ class BoardModel:
 
     @classmethod
     def default(cls) -> "BoardModel":
-        """
-        Create a default Plinko layout (your current design).
-        You can modify this to create different preset boards.
-        """
         grid = [
             [0, 1, 0, 1, 0, 1, 0],
             [0, 0, 1, 0, 1, 0, 0],
@@ -50,9 +41,6 @@ class BoardModel:
         ]
         slot_scores = [10, 20, 50, 100, 50, 20, 10]
         return cls(grid=grid, slot_scores=slot_scores)
-
-    # (Optional) you can add from_file/to_file later for load/save.
-
     # ---------- Basic helpers ----------
 
     def in_bounds(self, r: int, c: int) -> bool:
@@ -114,18 +102,6 @@ class BoardModel:
         if not self.in_bounds(r, c):
             raise IndexError(f"Cell ({r}, {c}) is out of bounds.")
         self.grid[r][c] = EMPTY if self.grid[r][c] == PEG else PEG
-
-    # Placeholder for "rotating" pegs if you later introduce directional pegs.
-    def rotate_peg(self, r: int, c: int) -> None:
-        """
-        For now, rotation doesn't change anything because pegs are symmetric.
-        If you later introduce directional pegs with different probabilities,
-        you can store orientation here.
-        """
-        if not self.is_peg(r, c):
-            raise ValueError(f"No peg to rotate at ({r}, {c}).")
-        # TODO: implement when you introduce special peg types
-        pass
 
     # ---------- API for other modules ----------
 
