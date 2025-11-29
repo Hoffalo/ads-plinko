@@ -13,6 +13,7 @@ def build_graph(board_model):
 
     peg_list = board_model.get_pegs()
 
+#build graph edges for every peg
     for peg_row, peg_column in peg_list:
         peg_node = node_for_peg(peg_row, peg_column)
         if peg_node not in neighbors:
@@ -23,6 +24,7 @@ def build_graph(board_model):
         for child in (left_child, right_child):
             if child is None:
                 continue
+            #slot child case
             if type(child) == int:
                 slot_column = child
                 slot_node = node_for_slot(slot_column)
@@ -30,6 +32,7 @@ def build_graph(board_model):
                     neighbors[slot_node] = []
                 neighbors[peg_node].append((slot_node, 0.5))
             else:
+                #peg child case
                 child_row, child_column = child
                 child_peg_node = node_for_peg(child_row, child_column)
                 if child_peg_node not in neighbors:
@@ -38,6 +41,7 @@ def build_graph(board_model):
 
     number_of_columns = board_model.number_of_columns
 
+#first peg hit when dropping in each column
     for column in range(number_of_columns):
         start_node = first_node_for_column(board_model, column)
         start_nodes[column] = start_node
@@ -45,6 +49,8 @@ def build_graph(board_model):
             neighbors[start_node] = []
 
     return neighbors, start_nodes
+
+#go down until you find a peg or reach the bottom
 def first_node_for_column(board_model, column):
     row = 0
     while row < board_model.number_of_rows and board_model.is_empty(row, column):
@@ -86,6 +92,7 @@ def compute_expected_values(board_model):
         return total
 
     result_list = []
+    #built list of expected values per column
     for column in range(board_model.number_of_columns):
         start_node = start_nodes.get(column)
         if start_node is None:
