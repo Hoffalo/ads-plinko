@@ -11,6 +11,8 @@ class BoardModel:
     def in_bounds(self, row, column):
         return 0 <= row < self.number_of_rows and 0 <= column < self.number_of_columns
 
+# check the boundry and read or write the value, the value should be either EMPTY or PEG
+
     def get_cell(self, row, column):
         if not self.in_bounds(row, column):
             raise Exception("Out of bounds")
@@ -28,7 +30,7 @@ class BoardModel:
 
     def is_empty(self, row, column):
         return self.in_bounds(row, column) and self.grid[row][column] == EMPTY
-
+# collects all peg positions on the board  
     def get_pegs(self):
         result = []
         for row in range(self.number_of_rows):
@@ -36,7 +38,7 @@ class BoardModel:
                 if self.grid[row][column] == PEG:
                     result.append((row, column))
         return result
-
+# return the list of scores at the botton rows 
     def get_slot_scores(self):
         return self.slot_scores[:]
 
@@ -44,11 +46,14 @@ class BoardModel:
         if not (0 <= column < self.number_of_columns):
             raise Exception("Invalid column")
         return self.slot_scores[column]
-
+    
+#children can be either another peg node, a slot, or outside the board (None)
     def get_children_of_peg(self, row, column):
         if not self.is_peg(row, column):
             raise Exception("There is no peg at this position")
+        # where the ball goes if it bounces left   
         left_child = self.child_direction(row, column, -1)
+        #where the ball goes if it bounces right
         right_child = self.child_direction(row, column, 1)
         return left_child, right_child
 
@@ -73,7 +78,3 @@ class BoardModel:
             return (current_row, new_column)
 
         return new_column
-
-
-
-
