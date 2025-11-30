@@ -4,6 +4,7 @@ def first_peg_position_for_column(board_model, column):
     if column < 0 or column >= board_model.number_of_columns:
         raise ValueError("Column is out of bounds")
     row = 0
+    #move down until we find a peg or reach the bottom
     while row < board_model.number_of_rows and board_model.is_empty(row, column):
         row = row + 1
     if row < board_model.number_of_rows and board_model.is_peg(row, column):
@@ -12,7 +13,7 @@ def first_peg_position_for_column(board_model, column):
 
 def simulate_fall(board_model, start_column):
     position = first_peg_position_for_column(board_model, start_column)
-    path_list = []
+    path_list = [] #store all the pegs the ball touches
 
     if position is None:
         final_slot_column = start_column
@@ -26,7 +27,7 @@ def simulate_fall(board_model, start_column):
 
         if left_child is None and right_child is None:
             return path_list, None
-
+# check this again
         random_value = random.random()
         if random_value < 0.5:
             chosen_child = left_child
@@ -39,11 +40,12 @@ def simulate_fall(board_model, start_column):
 
         if chosen_child is None:
             return path_list, None
-
+#if the chosen child is an int, that means its a slot column
         if type(chosen_child) == int:
             final_slot_column = chosen_child
             return path_list, final_slot_column
-
+        
+#if not a slot then it must be another peg
         child_row, child_column = chosen_child
         current_row = child_row
         current_column = child_column
