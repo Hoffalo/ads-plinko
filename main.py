@@ -19,6 +19,7 @@ def create_default_board_model():
         row_index = row_index + 1
 
     row_index = 0
+    #add pegs
     while row_index < number_of_rows:
         if row_index % 2 == 0:
             grid[row_index][1] = PEG
@@ -51,6 +52,7 @@ def ask_human_column(board_model):
             return column
         print("Column is out of range.")
 
+#main game loop
 def play_game():
     board_model = create_default_board_model()
     human_score = 0
@@ -61,6 +63,7 @@ def play_game():
     while current_round <= number_of_rounds:
         print("Round ", current_round,)
         human_column = ask_human_column(board_model)
+        #calling simulation code  
         human_path, human_slot, human_round_score = simulation.simulate_fall_and_score(board_model, human_column)
         print("Player one's path:", human_path)
         print("Player one's final slot column:", human_slot)
@@ -79,7 +82,7 @@ def play_game():
         print("Total AI score:", ai_score)
         current_round = current_round + 1
 
-    print("========== Game over ==========")
+    print("GAME OVER!!!!")
     print("Final player one's score:", human_score)
     print("Final AI score:", ai_score)
     if human_score > ai_score:
