@@ -27,7 +27,7 @@ def simulate_fall(board_model, start_column):
 
         if left_child is None and right_child is None:
             return path_list, None
-# check this again
+
         random_value = random.random()
         if random_value < 0.5:
             chosen_child = left_child
