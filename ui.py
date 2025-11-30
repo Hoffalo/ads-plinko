@@ -5,6 +5,7 @@ import simulation
 
 board_model = None
 board_gui = None
+
 human_score = 0
 ai_score = 0
 last_human_round_score = 0
@@ -15,7 +16,7 @@ is_busy = False
 game_over = False
 
 def create_default_board_model():
-    number_of_rows = 30
+    number_of_rows = 31          # one extra row at the top
     number_of_columns = 7
 
     grid = []
@@ -29,7 +30,7 @@ def create_default_board_model():
         grid.append(row)
         row_index = row_index + 1
 
-    row_index = 0
+    row_index = 1                # start pegs at row 1, row 0 stays empty
     while row_index < number_of_rows:
         if row_index % 2 == 0:
             grid[row_index][1] = PEG
@@ -40,7 +41,7 @@ def create_default_board_model():
             grid[row_index][4] = PEG
         row_index = row_index + 1
 
-    row_index = 0
+    row_index = 1                # edge pegs also start at row 1
     while row_index < number_of_rows:
         grid[row_index][0] = PEG
         grid[row_index][number_of_columns - 1] = PEG
@@ -52,47 +53,28 @@ def create_default_board_model():
 
 def clear_board_gui():
     row = 0
-    while row < board_gui.rows:
+    while row < board_gui.nrows:
         column = 0
-        while column < board_gui.cols:
+        while column < board_gui.ncols:
             board_gui[row][column] = ""
             column = column + 1
         row = row + 1
 
-def update_scoreboard_row():
-    scoreboard_row = 0
-    column = 0
-    while column < board_model.number_of_columns:
-        board_gui[scoreboard_row][column] = ""
-        column = column + 1
-    board_gui[scoreboard_row][0] = "H:" + str(human_score)
-    board_gui[scoreboard_row][3] = "R:" + str(round_number)
-    board_gui[scoreboard_row][6] = "AI:" + str(ai_score)
-
-def update_round_info_row(text):
-    info_row = 1
-    column = 0
-    while column < board_model.number_of_columns:
-        board_gui[info_row][column] = ""
-        column = column + 1
-    board_gui[info_row][0] = text
-
 def draw_static_board():
     clear_board_gui()
-    update_scoreboard_row()
-    update_round_info_row("Click a column to drop your ball")
 
-    offset = 2
     row = 0
     while row < board_model.number_of_rows:
         column = 0
         while column < board_model.number_of_columns:
             if board_model.is_peg(row, column):
-                board_gui[row + offset][column] = "●"
+                board_gui[row][column] = "●"
             column = column + 1
         row = row + 1
 
-    slot_row_gui = board_model.number_of_rows + offset
+    gap_rows = 2
+    slot_row_gui = board_model.number_of_rows + gap_rows
+
     column = 0
     while column < board_model.number_of_columns:
         score_value = board_model.get_slot_score_at_column(column)
@@ -100,26 +82,35 @@ def draw_static_board():
         column = column + 1
 
 def update_title():
-    text = "Plinko – Human " + str(human_score) + " vs AI " + str(ai_score)
+    text = "Plinko – H " + str(human_score) + " vs AI " + str(ai_score)
     board_gui.title = text
 
+def update_output(message_text):
+    board_gui.print(
+        "H:", human_score,
+        "  R:", round_number,
+        "  AI:", ai_score,
+        "   |   ", message_text,
+        end=""
+    )
+
 def animate_path(path_list, final_slot_column, score_value, player_symbol):
-    offset = 2
+    gap_rows = 2
     index = 0
     while index < len(path_list):
         row, column = path_list[index]
-        gui_row = row + offset
+        gui_row = row
         old_value = board_gui[gui_row][column]
         board_gui[gui_row][column] = player_symbol
-        board_gui.pause(100)
+        board_gui.pause(90)
         board_gui[gui_row][column] = old_value
         index = index + 1
 
     if final_slot_column is not None:
-        slot_row_gui = board_model.number_of_rows + offset
+        slot_row_gui = board_model.number_of_rows + gap_rows
         old_value = board_gui[slot_row_gui][final_slot_column]
-        board_gui[slot_row_gui][final_slot_column] = player_symbol + " " + str(score_value)
-        board_gui.pause(800)
+        board_gui[slot_row_gui][final_slot_column] = player_symbol + str(score_value)
+        board_gui.pause(700)
         board_gui[slot_row_gui][final_slot_column] = old_value
 
 def play_round(human_column):
@@ -133,39 +124,34 @@ def play_round(human_column):
     if game_over:
         return
 
-    update_round_info_row("Human plays column " + str(human_column))
+    update_output("You chose column " + str(human_column))
     path_list, final_slot_column, score_value = simulation.simulate_fall_and_score(board_model, human_column)
     animate_path(path_list, final_slot_column, score_value, "🔵")
     last_human_round_score = score_value
     human_score = human_score + score_value
-    update_scoreboard_row()
     update_title()
 
     ai_column, ai_expected_value = graph_dp.choose_best_column(board_model)
-    update_round_info_row("AI plays column " + str(ai_column))
+    update_output("AI chose column " + str(ai_column))
     path_list_ai, final_slot_column_ai, score_value_ai = simulation.simulate_fall_and_score(board_model, ai_column)
     animate_path(path_list_ai, final_slot_column_ai, score_value_ai, "🔴")
     last_ai_round_score = score_value_ai
     ai_score = ai_score + score_value_ai
-    update_scoreboard_row()
     update_title()
 
-    text = "Last round H:+"
-    text = text + str(last_human_round_score)
-    text = text + "  AI:+"
-    text = text + str(last_ai_round_score)
-    update_round_info_row(text)
+    text = "H+ " + str(last_human_round_score) + "   AI+ " + str(last_ai_round_score)
+    update_output(text)
 
     round_number = round_number + 1
     if round_number > max_rounds:
         game_over = True
         if human_score > ai_score:
-            final_text = "GAME OVER – Human wins!"
+            final_text = "GAME OVER: Human wins"
         elif ai_score > human_score:
-            final_text = "GAME OVER – AI wins!"
+            final_text = "GAME OVER: AI wins"
         else:
-            final_text = "GAME OVER – It is a tie!"
-        update_round_info_row(final_text)
+            final_text = "GAME OVER: Tie"
+        update_output(final_text)
         update_title()
 
 def handle_click(mouse_button, row, column):
@@ -181,21 +167,30 @@ def handle_click(mouse_button, row, column):
 def start_game():
     draw_static_board()
     update_title()
+    update_output("Click a column to start")
 
 def main():
     global board_model
     global board_gui
 
     board_model = create_default_board_model()
-    total_rows_gui = board_model.number_of_rows + 3
+
+    gap_rows = 2
+    total_rows_gui = board_model.number_of_rows + gap_rows + 1
 
     board_gui = Board(total_rows_gui, board_model.number_of_columns)
-    board_gui.cell_size = 28
-    board_gui.font_size = 14
-    board_gui.cell_color = "#fdf2ff"
-    board_gui.grid_color = "#ff66b3"
+    board_gui.cell_size = (30, 20)
+    board_gui.font_size = 11
+    board_gui.cell_color = "#fffaf5"
+    board_gui.grid_color = "#ffb3d9"
     board_gui.margin = 20
     board_gui.cell_spacing = 1
+
+    board_gui.create_output(
+        color="black",
+        background_color="#ffe6f2",
+        font_size=12
+    )
 
     board_gui.on_start = start_game
     board_gui.on_mouse_click = handle_click
