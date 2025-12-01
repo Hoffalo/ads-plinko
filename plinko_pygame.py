@@ -3,7 +3,7 @@ from board import BoardModel, EMPTY, PEG
 import graph_dp
 import simulation
 
-FULLSCREEN = True
+FULLSCREEN = False
 
 COLOR_BACKGROUND   = (10, 5, 35)
 COLOR_BOARD_PANEL  = (7, 20, 70)
@@ -51,7 +51,7 @@ ball_y = 0.0
 ball_color = COLOR_HUMAN_BALL
 path_points = []
 path_index = 0
-ball_speed = 12.0
+ball_speed = 10.0
 
 last_human_round_score = 0
 last_ai_round_score = 0
@@ -502,7 +502,7 @@ def main():
 
     layout = compute_layout(sw, sh)
 
-    font_small = pygame.font.SysFont("arial", 24, bold=True)
+    font_small = pygame.font.SysFont("arial", 10, bold=True)
     font_big   = pygame.font.SysFont("arial", 30, bold=True)
     font_huge  = pygame.font.SysFont("arial", 70, bold=True)
 

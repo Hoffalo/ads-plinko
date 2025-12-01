@@ -61,46 +61,46 @@ def first_node_for_column(board_model, column):
 
     return node_for_slot(column)
 
+def expected_value_for_node(node, board_model, neighbors, expected_value):
+    if node in expected_value:
+        return expected_value[node]
+    kind = node[0]
+
+    if kind == "slot":
+        slot_column = node[1]
+        value = float(board_model.get_slot_score_at_column(slot_column))
+        expected_value[node] = value
+        return value
+
+    neighbor_list = neighbors.get(node, [])
+    if not neighbor_list:
+        value = 0.0
+        expected_value[node] = value
+        return value
+
+    total = 0.0
+    for child_node, probability in neighbor_list:
+        child_value = expected_value_for_node(child_node, board_model, neighbors, expected_value)
+        total = total + probability * child_value
+
+    expected_value[node] = total
+    return total
+
 def compute_expected_values(board_model):
     neighbors, start_nodes = build_graph(board_model)
     expected_value = {}
-
-    def expected_value_for_node(node):
-        if node in expected_value:
-            return expected_value[node]
-        kind = node[0]
-
-        if kind == "slot":
-            slot_column = node[1]
-            value = float(board_model.get_slot_score_at_column(slot_column))
-            expected_value[node] = value
-            return value
-
-        neighbor_list = neighbors.get(node, [])
-
-        if not neighbor_list:
-            value = 0.0
-            expected_value[node] = value
-            return value
-
-        total = 0.0
-        for child_node, probability in neighbor_list:
-            child_value = expected_value_for_node(child_node)
-            total = total + probability * child_value
-
-        expected_value[node] = total
-        return total
-
     result_list = []
-    #built list of expected values per column
+
     for column in range(board_model.number_of_columns):
         start_node = start_nodes.get(column)
         if start_node is None:
             result_list.append(0.0)
         else:
-            result_list.append(expected_value_for_node(start_node))
+            value = expected_value_for_node(start_node, board_model, neighbors, expected_value)
+            result_list.append(value)
 
     return result_list
+
 
 def choose_best_column(board_model):
     expected_values_list = compute_expected_values(board_model)
