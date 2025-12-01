@@ -1,0 +1,71 @@
+Time Complexity Analysis
+
+This document explains the asymptotic time complexity of every algorithmic function in the project. 
+Let R denote the number of rows in a board, C the number of columns, and P the number of pegs (P ≤ R·C). 
+When random paths are involved, k represents the number of pegs visited by a single simulated fall (bounded by R).
+
+## board.py
+
+BoardModel.__init__: Initializes and stores the grid and slot scores in O(1) time given pre-built inputs. 
+in_bounds, get_cell, set_cell, is_peg, is_empty, get_slot_score_at_column: perform constant-time bounds checks and value lookups, so O(1).
+get_pegs: Scans every cell to collect peg locations → O(R·C).
+get_slot_scores: Returns a shallow copy of the slot scores list → O(C).
+get_children_of_peg: Calls child_direction for left and right so it is two passes of that procedure, giving O(Tchild). 
+child_direction: After basic bounds checks, it may walk downward through empty cells in the chosen column until it finds a peg or exits the board. In the worst case it inspects each remaining row below the current peg, so O(R).
+
+## graph_dp.py
+
+node_for_peg, node_for_slot: Create tuple identifiers in O(1).
+
+build_graph:
+- Collects all pegs using get_pegs (O(R·C)).
+- For each peg, get_children_of_peg is invoked once and internally calls child_direction twice, costing O(P·R) in the worst case when many empty rows are scanned downward per peg.
+- Initializes start nodes by calling first_node_for_column for every column, which can scan up to R rows each (O(R·C)).
+- Overall worst-case complexity: O(R·C + P·R + R·C) = O(P·R + R·C). When the board is dense (P ≈ R·C), this simplifies to O(R²·C).
+
+first_node_for_column: Walks downward until encountering a peg or the bottom, so O(R).
+
+compute_expected_values:
+- Builds the graph as above.
+- Uses memoized recursion to evaluate each graph node once. The number of nodes is P pegs plus C slots, and each peg contributes up to two edges. Traversal therefore runs in O(P + C) after the graph is built.
+- The final list of expected values iterates over all columns in O(C). Total complexity: O(P·R + R·C + P + C).
+
+choose_best_column: Scans the expected value list once to find the maximum, so O(C).
+
+## simulation.py
+
+first_peg_position_for_column: Moves downward until a peg is found or the bottom is reached → O(R).
+simulate_fall:
+- Finds the first peg in O(R).
+- Each bounce queries get_children_of_peg, which may scan downwards through empty cells (O(R) per bounce). A path can visit at most k pegs (k ≤ R), so the worst case is O(R + k·R) = O(R²).
+- simulate_fall_and_score: Delegates to simulate_fall and adds constant-time scoring, keeping the overall time O(R²).
+
+## main.py
+
+create_default_board_model: Builds a 30×7 grid, fills it, and places pegs using nested loops over all cells → O(R·C). Slot score initialization is O(C).
+ask_human_column: Performs constant-time input validation per attempt → O(1) per try.
+play_game: Runs a fixed number of rounds (5). Each round performs one simulation for the human and one for the AI and scans expected values via choose_best_column. With the round count constant, the loop contributes O(1)·(simulation + choice) = O(R² + C).
+main: Invokes play_game once → O(R² + C). 
+
+## plinko_pygame.py
+
+create_default_board_model: Builds a larger grid (35×25) and populates pegs; work is proportional to the number of cells and columns → O(R·C).
+compute_layout: Computes layout values with a fixed set of arithmetic operations → O(1).
+grid_to_pixel: Constant-time coordinate mapping → O(1).
+build_path_points: Converts a simulated path of length k into pixel coordinates, performing O(k) work.
+handle_human_click: Validates the click position and, when valid, runs one simulation and path conversion. Validation is O(1); the dominant cost is simulate_fall_and_score (O(R²)) plus build_path_points (O(k)).
+start_ai_turn: Mirrors the human turn logic; overall complexity O(R² + k). 
+update_animation: Advances the ball one step per frame. Each call performs constant work regardless of board size, so O(1) per invocation.
+draw_board: Draws the grid, pegs, and slots by iterating over all rows and columns several times, leading to O(R·C) drawing operations per frame.
+draw_ball: Constant-time drawing for the current ball position → O(1).
+draw_hud: Performs fixed-size text updates → O(1).
+main: Runs an event loop that processes user input, triggers simulations as needed, and redraws every frame. Per frame cost is dominated by update_animation (O(1)) and draw_board (O(R·C)).
+ui.py
+create_default_board_model: Builds and fills a 31×7 grid and assigns pegs → O(R·C).
+clear_board_gui, draw_static_board: Iterate across all board cells once (or a few times) to reset and render pegs/slots, costing O(R·C).
+update_title, update_output: Perform constant-time GUI updates → O(1).
+animate_path: Steps through a simulated path of length k, updating the GUI per step, so O(k). 
+play_round: Executes one human simulation and one AI simulation plus animation. Each simulation is O(R²) and each animation O(k), yielding O(R² + k).
+handle_click: Simple guard checks and delegation to play_round → O(R² + k).
+start_game: Clears the board and sets initial text, dominated by draw_static_board at O(R·C).
+main: Sets up the model and GUI (O(R·C)) and enters the event loop controlled by game2dboard, whose per-click cost defers to handle_click. 
