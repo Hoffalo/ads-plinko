@@ -71,15 +71,23 @@ plinko_pygame.py: full-screen neon Plinko with visible pegs and animated balls.
 - Separate text-mode version (main.py) for quick testing.
 
 ## 3. Project Structure
-.
+
 ├── board.py            # BoardModel: grid + slot scores + peg physics
+├
 ├── graph_dp.py         # AI logic: graph construction + DP for expected values
+├
 ├── simulation.py       # Random ball path simulation and scoring
+├
 ├── main.py             # Console version of the game (human vs AI, text-based)
+├
 ├── ui.py               # game2dboard-based GUI version (matrix-style interface)
+├
 ├── plinko_pygame.py    # Pygame-based neon Plinko UI (full-screen)
+├
 ├── time_complexity.txt # Time complexity analysis document
+├
 ├── game2dbaord         # Folder containing the necessary requirements for ui.py
+├
 └── README.md           # This file
 
 ### 3.1 board.py

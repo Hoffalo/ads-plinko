@@ -51,18 +51,16 @@ ball_y = 0.0
 ball_color = COLOR_HUMAN_BALL
 path_points = []
 path_index = 0
-ball_speed = 10.0
+ball_speed = 8.0
 
 last_human_round_score = 0
 last_ai_round_score = 0
 
 
 def create_default_board_model():
-    # Bigger Plinko board: 35 rows (tall), 25 columns (wide)
     number_of_rows = 35
     number_of_columns = 25
 
-    # Start with all cells empty
     grid = []
     row_index = 0
     while row_index < number_of_rows:
@@ -74,31 +72,26 @@ def create_default_board_model():
         grid.append(row)
         row_index = row_index + 1
 
-    # Staggered peg pattern inside (no pegs in row 0 so the top is free)
     row_index = 1
     while row_index < number_of_rows:
         if row_index % 2 == 0:
-            # even rows: pegs in odd columns 1,3,5,... up to column before last
             column = 1
             while column < number_of_columns - 1:
                 grid[row_index][column] = PEG
                 column = column + 2
         else:
-            # odd rows: pegs in even columns 2,4,6,...
             column = 2
             while column < number_of_columns - 1:
                 grid[row_index][column] = PEG
                 column = column + 2
         row_index = row_index + 1
 
-    # Ragged vertical walls on left and right edges
     row_index = 1
     while row_index < number_of_rows:
         grid[row_index][0] = PEG
         grid[row_index][number_of_columns - 1] = PEG
         row_index = row_index + 1
 
-    # Slot scores: center high, edges low, computed automatically
     slot_scores = []
     center_column = (number_of_columns - 1) // 2
     column_index = 0
@@ -106,7 +99,6 @@ def create_default_board_model():
         distance = column_index - center_column
         if distance < 0:
             distance = -distance
-        # Highest value at the center, decreasing toward edges
         value = 300 - distance * 15
         if value < 10:
             value = 10
@@ -116,6 +108,7 @@ def create_default_board_model():
     board_model_local = BoardModel(grid, slot_scores)
     return board_model_local
 
+
 def compute_layout(screen_width, screen_height):
     rows = board_model.number_of_rows
     cols = board_model.number_of_columns
@@ -123,10 +116,11 @@ def compute_layout(screen_width, screen_height):
     slot_rows = 1
     total_rows = rows + gap_rows + slot_rows
 
-    available_height = screen_height - TOP_MARGIN - BOTTOM_MARGIN_FOR_BOARD - BOTTOM_HUD_HEIGHT
+    available_height = (
+        screen_height - TOP_MARGIN - BOTTOM_MARGIN_FOR_BOARD - BOTTOM_HUD_HEIGHT
+    )
     cell_size_by_height = available_height / float(total_rows)
 
-    # Let the board use up to 90% of the screen width
     max_board_width = screen_width * 0.9
     cell_size_by_width = max_board_width / float(cols)
 
@@ -145,7 +139,7 @@ def compute_layout(screen_width, screen_height):
         "board_height": board_height,
         "cell_size": cell_size,
         "gap_rows": gap_rows,
-        "total_rows": total_rows
+        "total_rows": total_rows,
     }
     return layout
 
@@ -204,16 +198,13 @@ def handle_human_click(layout, mouse_x, mouse_y):
         return
 
     path_list, final_slot_column, score_value = simulation.simulate_fall_and_score(
-        board_model,
-        column
+        board_model, column
     )
     last_human_round_score = score_value
 
     points = build_path_points(layout, column, path_list, final_slot_column)
     path_points[:] = points
-    global path_index
     path_index = 1
-    global ball_x, ball_y
     ball_x, ball_y = points[0]
     ball_color = COLOR_HUMAN_BALL
     globals()["game_state"] = "ANIM_HUMAN"
@@ -225,8 +216,7 @@ def start_ai_turn(layout):
 
     ai_column, ai_expected_value = graph_dp.choose_best_column(board_model)
     path_list, final_slot_column, score_value = simulation.simulate_fall_and_score(
-        board_model,
-        ai_column
+        board_model, ai_column
     )
     last_ai_round_score = score_value
 
@@ -242,7 +232,7 @@ def update_animation():
     global ball_x, ball_y, path_index, game_state
     global human_score, ai_score, round_number
 
-    if game_state != "ANIM_HUMAN" and game_state != "ANIM_AI":
+    if game_state not in ("ANIM_HUMAN", "ANIM_AI"):
         return
 
     if path_index >= len(path_points):
@@ -288,7 +278,7 @@ def draw_neon_frame(surface, layout):
         int(board_left - 25),
         int(board_top - 50),
         int(board_width + 50),
-        int(board_height + 80)
+        int(board_height + 80),
     )
     pygame.draw.rect(surface, COLOR_BOARD_GLOW, outer_rect, border_radius=30)
 
@@ -299,7 +289,7 @@ def draw_neon_frame(surface, layout):
         int(board_left),
         int(board_top),
         int(board_width),
-        int(board_height)
+        int(board_height),
     )
     pygame.draw.rect(surface, COLOR_BOARD_PANEL, panel_rect)
 
@@ -308,19 +298,19 @@ def draw_neon_frame(surface, layout):
         int(board_left),
         int(board_top),
         int(rail_width),
-        int(board_height)
+        int(board_height),
     )
     right_rail = pygame.Rect(
         int(board_left + board_width - rail_width),
         int(board_top),
         int(rail_width),
-        int(board_height)
+        int(board_height),
     )
     pygame.draw.rect(surface, COLOR_BOARD_BORDER, left_rail)
     pygame.draw.rect(surface, COLOR_BOARD_BORDER, right_rail)
 
 
-def draw_board(surface, layout, font_small):
+def draw_board(surface, layout, font_slot):
     surface.fill(COLOR_BACKGROUND)
     draw_neon_frame(surface, layout)
 
@@ -339,7 +329,7 @@ def draw_board(surface, layout, font_small):
             COLOR_GRID,
             (board_left, y),
             (board_left + cols * cell, y),
-            1
+            1,
         )
         row_index = row_index + 1
 
@@ -351,7 +341,7 @@ def draw_board(surface, layout, font_small):
             COLOR_GRID,
             (x, board_top),
             (x, board_top + (rows + gap_rows) * cell),
-            1
+            1,
         )
         col_index = col_index + 1
 
@@ -365,13 +355,13 @@ def draw_board(surface, layout, font_small):
                     surface,
                     COLOR_PEG_OUTER,
                     (int(x), int(y)),
-                    PEG_RADIUS_OUTER
+                    PEG_RADIUS_OUTER,
                 )
                 pygame.draw.circle(
                     surface,
                     COLOR_PEG_INNER,
                     (int(x), int(y - 1)),
-                    PEG_RADIUS_INNER
+                    PEG_RADIUS_INNER,
                 )
             column = column + 1
         row = row + 1
@@ -382,7 +372,6 @@ def draw_board(surface, layout, font_small):
         x, y = grid_to_pixel(layout, slot_row, column)
         base_color = SLOT_BASE_COLORS[column % len(SLOT_BASE_COLORS)]
 
-        # Make the slot bar taller and more prominent
         rect_width = cell - 4
         rect_height = cell * 1.3
         rect_left = int(x - rect_width / 2)
@@ -392,32 +381,35 @@ def draw_board(surface, layout, font_small):
             rect_left,
             rect_top,
             int(rect_width),
-            int(rect_height)
+            int(rect_height),
         )
         pygame.draw.rect(surface, base_color, rect, border_radius=6)
         pygame.draw.rect(surface, COLOR_SLOT_BORDER, rect, 2, border_radius=6)
 
         score_value = board_model.get_slot_score_at_column(column)
-        text_surface = font_small.render(str(score_value), True, COLOR_SLOT_TEXT)
-        text_rect = text_surface.get_rect(center=(x, rect_top + rect_height / 2 + cell * 0.1))
+        text_surface = font_slot.render(str(score_value), True, COLOR_SLOT_TEXT)
+
+        # place the score JUST UNDER the slot bar
+        text_rect = text_surface.get_rect()
+        text_rect.midtop = (x, rect_top + rect_height + cell * 0.15)
         surface.blit(text_surface, text_rect)
 
         column = column + 1
 
 
 def draw_ball(surface):
-    if game_state == "ANIM_HUMAN" or game_state == "ANIM_AI":
+    if game_state in ("ANIM_HUMAN", "ANIM_AI"):
         pygame.draw.circle(
             surface,
             (255, 255, 255),
             (int(ball_x), int(ball_y - 2)),
-            BALL_RADIUS - 4
+            BALL_RADIUS - 4,
         )
         pygame.draw.circle(
             surface,
             ball_color,
             (int(ball_x), int(ball_y)),
-            BALL_RADIUS
+            BALL_RADIUS,
         )
 
 
@@ -428,7 +420,7 @@ def draw_hud(surface, layout, font_small, font_big, font_huge):
         0,
         screen_height - BOTTOM_HUD_HEIGHT,
         screen_width,
-        BOTTOM_HUD_HEIGHT
+        BOTTOM_HUD_HEIGHT,
     )
     pygame.draw.rect(surface, COLOR_HUD_PANEL, hud_rect)
 
@@ -502,9 +494,11 @@ def main():
 
     layout = compute_layout(sw, sh)
 
-    font_small = pygame.font.SysFont("arial", 10, bold=True)
+    # different font for slot scores vs HUD text
+    font_small = pygame.font.SysFont("arial", 24, bold=True)
     font_big   = pygame.font.SysFont("arial", 30, bold=True)
     font_huge  = pygame.font.SysFont("arial", 70, bold=True)
+    font_slot  = pygame.font.SysFont("arial", 10, bold=False)
 
     clock = pygame.time.Clock()
     running = True
@@ -523,7 +517,7 @@ def main():
         if game_state == "AFTER_HUMAN":
             start_ai_turn(layout)
 
-        draw_board(screen, layout, font_small)
+        draw_board(screen, layout, font_slot)
         draw_ball(screen)
         draw_hud(screen, layout, font_small, font_big, font_huge)
 
